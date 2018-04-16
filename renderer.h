@@ -243,7 +243,7 @@ class Renderer {
     optional<Color> color;
   };
   vector<DeferredSprite> deferredSprites;
-  void renderDeferredSprites();
+  void renderDeferredSprites(SDL::GLuint currentTexture, const DeferredSprite& elem);
   bool isScissor = false;
   void loadTilesFromDir(const DirectoryPath&, vector<Texture>&, Vec2 size, int setWidth);
   struct TileDirectory {

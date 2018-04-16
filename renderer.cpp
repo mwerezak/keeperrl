@@ -224,64 +224,34 @@ void Texture::addTexCoord(int x, int y) const {
   SDL::glTexCoord2f((float)x / realSize.x, (float)y / realSize.y);
 }
 
+static void addTexCoord(Vec2 realSize, int x, int y) {
+  SDL::glTexCoord2f((float)x / realSize.x, (float)y / realSize.y);
+}
+
 Texture::Texture() {
 }
 
-void Renderer::renderDeferredSprites() {
-  static vector<SDL::GLfloat> vertices;
-  static vector<SDL::GLfloat> texCoords;
-  static vector<SDL::GLfloat> colors;
-  vertices.clear();
-  texCoords.clear();
-  colors.clear();
-  auto addVertex = [&](Vec2 v, int texX, int texY, Vec2 texSize, Color color) {
-    vertices.push_back(v.x);
-    vertices.push_back(v.y);
-    texCoords.push_back(((float)texX) / texSize.x);
-    texCoords.push_back(((float)texY) / texSize.y);
-    colors.push_back(((float) color.r) / 255);
-    colors.push_back(((float) color.g) / 255);
-    colors.push_back(((float) color.b) / 255);
-    colors.push_back(((float) color.a) / 255);
-  };
-  optional<SDL::GLuint> currentTex;
-  for (auto& elem : deferredSprites) {
-    auto add = [&](Vec2 v, int texX, int texY, const DeferredSprite& draw) {
-      addVertex(v, texX, texY, draw.realSize, draw.color.value_or(Color::WHITE));
-    };
-    add(elem.a, elem.p.x, elem.p.y, elem);
-    add(elem.b, elem.k.x, elem.p.y, elem);
-    add(elem.c, elem.k.x, elem.k.y, elem);
-    add(elem.a, elem.p.x, elem.p.y, elem);
-    add(elem.c, elem.k.x, elem.k.y, elem);
-    add(elem.d, elem.p.x, elem.k.y, elem);
-  }
-  if (!vertices.empty()) {
-    SDL::glEnable(GL_TEXTURE_2D);
-    SDL::glBindTexture(GL_TEXTURE_2D, *currentTexture);
-    checkOpenglError();
-    SDL::glEnableClientState(GL_VERTEX_ARRAY);
-    SDL::glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    SDL::glEnableClientState(GL_COLOR_ARRAY);
-    checkOpenglError();
-    SDL::glColorPointer(4, GL_FLOAT, 0, colors.data());
-    checkOpenglError();
-    SDL::glVertexPointer(2, GL_FLOAT, 0, vertices.data());
-    checkOpenglError();
-    SDL::glTexCoordPointer(2, GL_FLOAT, 0, texCoords.data());
-    checkOpenglError();
-    SDL::glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 2);
-    checkOpenglError();
-    checkOpenglError();
-    vertices.clear();
-    texCoords.clear();
-    colors.clear();
-    SDL::glDisableClientState(GL_VERTEX_ARRAY);
-    SDL::glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    SDL::glDisableClientState(GL_COLOR_ARRAY);
-    SDL::glDisable(GL_TEXTURE_2D);
-  }
-  deferredSprites.clear();
+void Renderer::renderDeferredSprites(SDL::GLuint currentTexture, const DeferredSprite& elem) {
+  CHECK(currentThreadId() == *renderThreadId);
+  SDL::glBindTexture(GL_TEXTURE_2D, currentTexture);
+  checkOpenglError();
+  SDL::glEnable(GL_TEXTURE_2D);
+  SDL::glBegin(GL_QUADS);
+  if (elem.color)
+    elem.color->applyGl();
+  else
+    SDL::glColor3f(1, 1, 1);
+  addTexCoord(elem.realSize, elem.p.x, elem.p.y);
+  SDL::glVertex2f(elem.a.x, elem.a.y);
+  addTexCoord(elem.realSize, elem.k.x, elem.p.y);
+  SDL::glVertex2f(elem.b.x, elem.b.y);
+  addTexCoord(elem.realSize, elem.k.x, elem.k.y);
+  SDL::glVertex2f(elem.c.x, elem.c.y);
+  addTexCoord(elem.realSize, elem.p.x, elem.k.y);
+  SDL::glVertex2f(elem.d.x, elem.d.y);
+  SDL::glEnd();
+  SDL::glDisable(GL_TEXTURE_2D);
+  checkOpenglError();
 }
 
 void Renderer::drawSprite(const Texture& t, Vec2 topLeft, Vec2 bottomRight, Vec2 p, Vec2 k, optional<Color> color) {
@@ -289,10 +259,10 @@ void Renderer::drawSprite(const Texture& t, Vec2 topLeft, Vec2 bottomRight, Vec2
 }
 
 void Renderer::drawSprite(const Texture& t, Vec2 a, Vec2 b, Vec2 c, Vec2 d, Vec2 p, Vec2 k, optional<Color> color) {
-  if (currentTexture && currentTexture != *t.texId)
+  /*if (currentTexture && currentTexture != *t.texId)
     renderDeferredSprites();
-  currentTexture = *t.texId;
-  deferredSprites.push_back({a, b, c, d, p, k, t.realSize, color});
+  currentTexture = *t.texId;*/
+  renderDeferredSprites(*t.texId, {a, b, c, d, p, k, t.realSize, color});
 }
 
 static float sizeConv(int size) {
@@ -325,7 +295,7 @@ int Renderer::getFont(Renderer::FontId id) {
 }
 
 void Renderer::drawText(FontId id, int size, Color color, Vec2 pos, const string& s, CenterType center) {
-  renderDeferredSprites();
+  //renderDeferredSprites();
   if (!s.empty()) {
     int ox = 0;
     int oy = 0;
@@ -409,7 +379,7 @@ void Renderer::drawSprite(Vec2 pos, Vec2 source, Vec2 size, const Texture& t,
 }
 
 void Renderer::drawFilledRectangle(const Rectangle& t, Color color, optional<Color> outline) {
-  renderDeferredSprites();
+  //renderDeferredSprites();
   Vec2 a = t.topLeft();
   Vec2 b = t.bottomRight();
   if (outline) {
@@ -450,7 +420,7 @@ void Renderer::addQuad(const Rectangle& r, Color color) {
 }
 
 void Renderer::setScissor(optional<Rectangle> s) {
-  renderDeferredSprites();
+  //renderDeferredSprites();
   if (s) {
     int zoom = getZoom();
     SDL::glScissor(s->left() * zoom, (getSize().y - s->bottom()) * zoom, s->width() * zoom, s->height() * zoom);
@@ -464,7 +434,7 @@ void Renderer::setScissor(optional<Rectangle> s) {
 }
 
 void Renderer::setTopLayer() {
-  renderDeferredSprites();
+  //renderDeferredSprites();
   SDL::glPushMatrix();
   checkOpenglError();
   SDL::glTranslated(0, 0, 1);
@@ -473,7 +443,7 @@ void Renderer::setTopLayer() {
 }
 
 void Renderer::popLayer() {
-  renderDeferredSprites();
+  //renderDeferredSprites();
   SDL::glPopMatrix();
   checkOpenglError();
   if (isScissor)
@@ -751,7 +721,7 @@ Vec2 Renderer::getNominalSize() const {
 }
 
 void Renderer::drawAndClearBuffer() {
-  renderDeferredSprites();
+  //renderDeferredSprites();
   SDL::SDL_GL_SwapWindow(window);
   SDL::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   SDL::glClearColor(0.0, 0.0, 0.0, 0.0);
