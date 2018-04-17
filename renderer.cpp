@@ -232,12 +232,9 @@ Texture::Texture() {
 }
 
 static void renderDeferredSprites(SDL::GLuint currentTexture, const vector<Renderer::DeferredSprite>& deferredSprites) {
-  static vector<SDL::GLfloat> vertices;
-  static vector<SDL::GLfloat> texCoords;
-  static vector<SDL::GLfloat> colors;
-  vertices.clear();
-  texCoords.clear();
-  colors.clear();
+  vector<SDL::GLfloat> vertices;
+  vector<SDL::GLfloat> texCoords;
+  vector<SDL::GLfloat> colors;
   auto addVertex = [&](Vec2 v, int texX, int texY, Vec2 texSize, Color color) {
     vertices.push_back(v.x);
     vertices.push_back(v.y);
