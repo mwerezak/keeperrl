@@ -195,6 +195,13 @@ class Renderer {
   void addTilesDirectory(const DirectoryPath& path, Vec2 size);
   void loadTiles();
 
+  struct DeferredSprite {
+    Vec2 a, b, c, d;
+    Vec2 p, k;
+    Vec2 realSize;
+    optional<Color> color;
+  };
+
   private:
   friend class Texture;
   optional<Texture> textTexture;
@@ -236,14 +243,8 @@ class Renderer {
   optional<SDL::GLuint> currentTexture;
   void drawSprite(const Texture& t, Vec2 a, Vec2 b, Vec2 c, Vec2 d, Vec2 p, Vec2 k, optional<Color> color);
   void drawSprite(const Texture& t, Vec2 topLeft, Vec2 bottomRight, Vec2 p, Vec2 k, optional<Color> color);
-  struct DeferredSprite {
-    Vec2 a, b, c, d;
-    Vec2 p, k;
-    Vec2 realSize;
-    optional<Color> color;
-  };
   vector<DeferredSprite> deferredSprites;
-  void renderDeferredSprites(SDL::GLuint currentTexture, const DeferredSprite& elem);
+  //void renderDeferredSprites(SDL::GLuint currentTexture, const DeferredSprite& elem);
   bool isScissor = false;
   void loadTilesFromDir(const DirectoryPath&, vector<Texture>&, Vec2 size, int setWidth);
   struct TileDirectory {
