@@ -224,11 +224,32 @@ void Texture::addTexCoord(int x, int y) const {
   SDL::glTexCoord2f((float)x / realSize.x, (float)y / realSize.y);
 }
 
-/*static void addTexCoord(Vec2 realSize, int x, int y) {
-  SDL::glTexCoord2f((float)x / realSize.x, (float)y / realSize.y);
-}*/
+static void addTexCoord(Vec2 realSize, float x, float y) {
+  SDL::glTexCoord2f(x / realSize.x, y / realSize.y);
+}
 
 Texture::Texture() {
+}
+
+static void renderArray(SDL::GLuint currentTexture,
+    Vec2 texSize,
+    vector<SDL::GLfloat> vertices,
+    vector<SDL::GLfloat> texCoords,
+    vector<SDL::GLfloat> colors) {
+  SDL::glEnable(GL_TEXTURE_2D);
+  checkOpenglError();
+  SDL::glBindTexture(GL_TEXTURE_2D, currentTexture);
+  checkOpenglError();
+  SDL::glBegin(GL_TRIANGLES);
+  for (int i = 0; i < vertices.size() / 2; ++i) {
+    SDL::glColor4f(colors[4 * i], colors[4 * i + 1], colors[4 * i + 2], colors[4 * i + 3]);
+    addTexCoord(Vec2(1, 1), texCoords[2 * i + 0], texCoords[2 * i + 1]);
+    SDL::glVertex2f(vertices[2 * i], vertices[2 * i + 1]);
+  }
+  SDL::glEnd();
+  checkOpenglError();
+  SDL::glDisable(GL_TEXTURE_2D);
+  checkOpenglError();
 }
 
 static void renderDeferredSprites(SDL::GLuint currentTexture, const vector<Renderer::DeferredSprite>& deferredSprites) {
@@ -257,31 +278,7 @@ static void renderDeferredSprites(SDL::GLuint currentTexture, const vector<Rende
     add(elem.c, elem.k.x, elem.k.y, elem);
     add(elem.d, elem.p.x, elem.k.y, elem);
   }
-  if (!vertices.empty()) {
-    SDL::glEnable(GL_TEXTURE_2D);
-    SDL::glBindTexture(GL_TEXTURE_2D, currentTexture);
-    checkOpenglError();
-    SDL::glEnableClientState(GL_VERTEX_ARRAY);
-    SDL::glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    SDL::glEnableClientState(GL_COLOR_ARRAY);
-    checkOpenglError();
-    SDL::glColorPointer(4, GL_FLOAT, 0, colors.data());
-    checkOpenglError();
-    SDL::glVertexPointer(2, GL_FLOAT, 0, vertices.data());
-    checkOpenglError();
-    SDL::glTexCoordPointer(2, GL_FLOAT, 0, texCoords.data());
-    checkOpenglError();
-    SDL::glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 2);
-    checkOpenglError();
-    checkOpenglError();
-    vertices.clear();
-    texCoords.clear();
-    colors.clear();
-    SDL::glDisableClientState(GL_VERTEX_ARRAY);
-    SDL::glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    SDL::glDisableClientState(GL_COLOR_ARRAY);
-    SDL::glDisable(GL_TEXTURE_2D);
-  }
+  renderArray(currentTexture, deferredSprites[0].realSize, vertices, texCoords, colors);
 }
 
 void Renderer::drawSprite(const Texture& t, Vec2 topLeft, Vec2 bottomRight, Vec2 p, Vec2 k, optional<Color> color) {
