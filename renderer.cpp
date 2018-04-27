@@ -240,13 +240,16 @@ static void renderArray(SDL::GLuint currentTexture,
   checkOpenglError();
   SDL::glBindTexture(GL_TEXTURE_2D, currentTexture);
   checkOpenglError();
-  SDL::glBegin(GL_TRIANGLES);
-  for (int i = 0; i < vertices.size() / 2; ++i) {
-    SDL::glColor4f(colors[4 * i], colors[4 * i + 1], colors[4 * i + 2], colors[4 * i + 3]);
-    addTexCoord(Vec2(1, 1), texCoords[2 * i + 0], texCoords[2 * i + 1]);
-    SDL::glVertex2f(vertices[2 * i], vertices[2 * i + 1]);
+  CHECK(vertices.size() == 12);
+  for (int triangle = 0; triangle < 2; ++triangle) {
+    SDL::glBegin(GL_TRIANGLES);
+    for (int i = triangle * 3; i < (triangle + 1) * 3; ++i) {
+      SDL::glColor4f(colors[4 * i], colors[4 * i + 1], colors[4 * i + 2], colors[4 * i + 3]);
+      addTexCoord(Vec2(1, 1), texCoords[2 * i + 0], texCoords[2 * i + 1]);
+      SDL::glVertex2f(vertices[2 * i], vertices[2 * i + 1]);
+    }
+    SDL::glEnd();
   }
-  SDL::glEnd();
   checkOpenglError();
   SDL::glDisable(GL_TEXTURE_2D);
   checkOpenglError();
