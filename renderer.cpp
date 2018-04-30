@@ -243,11 +243,15 @@ static void renderArray(SDL::GLuint currentTexture,
   CHECK(vertices.size() == 12);
   for (int triangle = 0; triangle < 2; ++triangle) {
     SDL::glBegin(GL_TRIANGLES);
+    std::cout << "Triangle begin\n";
     for (int i = triangle * 3; i < (triangle + 1) * 3; ++i) {
+      std::cout << "Vertex " << vertices[2 * i] << vertices[2 * i + 1] << "\n";
       SDL::glColor4f(colors[4 * i], colors[4 * i + 1], colors[4 * i + 2], colors[4 * i + 3]);
       addTexCoord(Vec2(1, 1), texCoords[2 * i + 0], texCoords[2 * i + 1]);
+      std::cout << "Tex coord " << texCoords[2 * i + 0] << texCoords[2 * i + 1] << "\n";
       SDL::glVertex2f(vertices[2 * i], vertices[2 * i + 1]);
     }
+    std::cout << "Triangle end\n";
     SDL::glEnd();
   }
   checkOpenglError();
