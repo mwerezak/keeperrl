@@ -226,6 +226,7 @@ void Texture::addTexCoord(int x, int y) const {
 
 static void addTexCoord(Vec2 realSize, int x, int y) {
   SDL::glTexCoord2f((float)x / realSize.x, (float)y / realSize.y);
+  std::cout << "Tex coord " << (float)x / realSize.x << " " << (float)y / realSize.y << "\n";
 }
 
 Texture::Texture() {
@@ -239,6 +240,7 @@ static void renderDeferredSprites(SDL::GLuint currentTexture, const vector<Rende
     SDL::glColor3f(1, 1, 1);
     addTexCoord(texSize, texX, texY);
     SDL::glVertex2f(v.x, v.y);
+    std::cout << "Vertex " << v.x << " " << v.y << "\n";
   };
   SDL::glBindTexture(GL_TEXTURE_2D, currentTexture);
   checkOpenglError();
@@ -248,14 +250,18 @@ static void renderDeferredSprites(SDL::GLuint currentTexture, const vector<Rende
       addVertex(v, texX, texY, draw.realSize, draw.color.value_or(Color::WHITE));
     };
     SDL::glBegin(GL_TRIANGLES);
+    std::cout << "Triangle begin\n";
     add(elem.a, elem.p.x, elem.p.y, elem);
     add(elem.b, elem.k.x, elem.p.y, elem);
     add(elem.c, elem.k.x, elem.k.y, elem);
+    std::cout << "Triangle end\n";
     SDL::glEnd();
     SDL::glBegin(GL_TRIANGLES);
+    std::cout << "Triangle begin\n";
     add(elem.a, elem.p.x, elem.p.y, elem);
     add(elem.c, elem.k.x, elem.k.y, elem);
     add(elem.d, elem.p.x, elem.k.y, elem);
+    std::cout << "Triangle end\n";
     SDL::glEnd();
   }
   SDL::glDisable(GL_TEXTURE_2D);
