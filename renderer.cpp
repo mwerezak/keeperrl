@@ -231,6 +231,26 @@ static void addTexCoord(Vec2 realSize, float x, float y) {
 Texture::Texture() {
 }
 
+struct FileLogger {
+  static void onTriangleLogged() {
+    if (--count <= 0)
+      of.reset();
+  }
+
+  static optional<ofstream>& get() {
+    if (!of && count > 0)
+      of = ofstream("triangles.txt");
+    return of;
+  }
+
+  private:
+  static optional<ofstream> of;
+  static int count;
+};
+
+int FileLogger::count = 10000;
+optional<ofstream> FileLogger::of;
+
 static void renderArray(SDL::GLuint currentTexture,
     Vec2 texSize,
     vector<SDL::GLfloat> vertices,
@@ -243,16 +263,22 @@ static void renderArray(SDL::GLuint currentTexture,
   CHECK(vertices.size() == 12);
   for (int triangle = 0; triangle < 2; ++triangle) {
     SDL::glBegin(GL_TRIANGLES);
-    std::cout << "Triangle begin\n";
+    auto& logger = FileLogger::get();
+    if (logger)
+      *logger << "Triangle begin\n";
     for (int i = triangle * 3; i < (triangle + 1) * 3; ++i) {
       SDL::glColor4f(colors[4 * i], colors[4 * i + 1], colors[4 * i + 2], colors[4 * i + 3]);
       addTexCoord(Vec2(1, 1), texCoords[2 * i + 0], texCoords[2 * i + 1]);
-      std::cout << "Tex coord " << texCoords[2 * i + 0] << " " << texCoords[2 * i + 1] << "\n";
-      std::cout << "Vertex " << vertices[2 * i] << " " << vertices[2 * i + 1] << "\n";
+      if (logger)
+        *logger << "Tex coord " << texCoords[2 * i + 0] << " " << texCoords[2 * i + 1] << "\n";
+      if (logger)
+        *logger << "Vertex " << vertices[2 * i] << " " << vertices[2 * i + 1] << "\n";
       SDL::glVertex2f(vertices[2 * i], vertices[2 * i + 1]);
     }
-    std::cout << "Triangle end\n";
+    if (logger)
+      *logger <<  "Triangle end\n";
     SDL::glEnd();
+    FileLogger::onTriangleLogged();
   }
   checkOpenglError();
   SDL::glDisable(GL_TEXTURE_2D);
