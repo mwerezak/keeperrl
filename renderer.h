@@ -202,6 +202,7 @@ class Renderer {
     optional<Color> color;
   };
 
+  void startLogging();
   private:
   friend class Texture;
   optional<Texture> textTexture;

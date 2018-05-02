@@ -404,7 +404,7 @@ static int keeperMain(po::parser& commandLineFlags) {
     ofstream systemInfo(userPath.file("system_info.txt").getPath());
     systemInfo << "KeeperRL version " << BUILD_VERSION << " " << BUILD_DATE << std::endl;
     renderer.printSystemInfo(systemInfo);
-    loop.start(tilesPresent, commandLineFlags["quick_game"].was_set());
+    loop.start(tilesPresent, true);
   } catch (GameExitException ex) {
   }
   jukebox.toggle(false);

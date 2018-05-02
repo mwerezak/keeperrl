@@ -243,13 +243,18 @@ struct FileLogger {
     return of;
   }
 
+  static int count;
+
   private:
   static optional<ofstream> of;
-  static int count;
 };
 
-int FileLogger::count = 10000;
+int FileLogger::count = 0;
 optional<ofstream> FileLogger::of;
+
+void Renderer::startLogging() {
+  FileLogger::count = 10000;
+}
 
 static void renderArray(SDL::GLuint currentTexture,
     Vec2 texSize,
