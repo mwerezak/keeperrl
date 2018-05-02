@@ -227,6 +227,7 @@ static optional<int> getNextActive(const vector<CollectiveInfo::Button>& buttons
 }
 
 SGuiElem GuiBuilder::drawBuildings(const CollectiveInfo& info, const optional<TutorialInfo>& tutorial) {
+  renderer.startLogging();
   vector<SGuiElem> keypressOnly;
   auto& buttons = info.buildings;
   auto tab = CollectiveTab::BUILDINGS;

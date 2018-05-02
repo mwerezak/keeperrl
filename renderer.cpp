@@ -224,23 +224,52 @@ void Texture::addTexCoord(int x, int y) const {
   SDL::glTexCoord2f((float)x / realSize.x, (float)y / realSize.y);
 }
 
-static void addTexCoord(Vec2 realSize, int x, int y) {
-  SDL::glTexCoord2f((float)x / realSize.x, (float)y / realSize.y);
-  std::cout << "Tex coord " << (float)x / realSize.x << " " << (float)y / realSize.y << "\n";
-}
-
 Texture::Texture() {
 }
+
+struct FileLogger {
+  static void onTriangleLogged() {
+    if (--count <= 0)
+      of.reset();
+  }
+
+  static optional<ofstream>& get() {
+    if (!of && count > 0)
+      of = ofstream("triangles_good.txt");
+    return of;
+  }
+
+  static int count;
+
+  private:
+  static optional<ofstream> of;
+};
+
+void Renderer::startLogging() {
+  FileLogger::count = 10000;
+}
+
+
+static void addTexCoord(Vec2 realSize, int x, int y) {
+  SDL::glTexCoord2f((float)x / realSize.x, (float)y / realSize.y);
+  if (auto& logger = FileLogger::get())
+    *logger << "Tex coord " << (float)x / realSize.x << " " << (float)y / realSize.y << "\n";
+}
+
+int FileLogger::count = 0;
+optional<ofstream> FileLogger::of;
 
 static void renderDeferredSprites(SDL::GLuint currentTexture, const vector<Renderer::DeferredSprite>& deferredSprites) {
   vector<SDL::GLfloat> vertices;
   vector<SDL::GLfloat> texCoords;
   vector<SDL::GLfloat> colors;
+  auto& logger = FileLogger::get();
   auto addVertex = [&](Vec2 v, int texX, int texY, Vec2 texSize, Color color) {
     SDL::glColor3f(1, 1, 1);
     addTexCoord(texSize, texX, texY);
     SDL::glVertex2f(v.x, v.y);
-    std::cout << "Vertex " << v.x << " " << v.y << "\n";
+    if (logger)
+      *logger << "Vertex " << v.x << " " << v.y << "\n";
   };
   SDL::glBindTexture(GL_TEXTURE_2D, currentTexture);
   checkOpenglError();
@@ -250,18 +279,24 @@ static void renderDeferredSprites(SDL::GLuint currentTexture, const vector<Rende
       addVertex(v, texX, texY, draw.realSize, draw.color.value_or(Color::WHITE));
     };
     SDL::glBegin(GL_TRIANGLES);
-    std::cout << "Triangle begin\n";
+    if (logger)
+      *logger << "Triangle begin\n";
     add(elem.a, elem.p.x, elem.p.y, elem);
     add(elem.b, elem.k.x, elem.p.y, elem);
     add(elem.c, elem.k.x, elem.k.y, elem);
-    std::cout << "Triangle end\n";
+    if (logger)
+      *logger << "Triangle end\n";
+    FileLogger::onTriangleLogged();
     SDL::glEnd();
     SDL::glBegin(GL_TRIANGLES);
-    std::cout << "Triangle begin\n";
+    if (logger)
+      *logger << "Triangle begin\n";
     add(elem.a, elem.p.x, elem.p.y, elem);
     add(elem.c, elem.k.x, elem.k.y, elem);
     add(elem.d, elem.p.x, elem.k.y, elem);
-    std::cout << "Triangle end\n";
+    if (logger)
+      *logger << "Triangle end\n";
+    FileLogger::onTriangleLogged();
     SDL::glEnd();
   }
   SDL::glDisable(GL_TEXTURE_2D);

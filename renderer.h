@@ -122,6 +122,7 @@ class Renderer {
   void setVsync(bool);
   void setZoom(int);
   int getZoom();
+  void startLogging();
   void enableCustomCursor(bool);
   void initialize();
   bool isFullscreen();
